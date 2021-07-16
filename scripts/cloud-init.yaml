@@ -1,0 +1,67 @@
+<powershell>
+echo "Hello World" | Set-Content -Path c:\hello.txt
+
+Install-WindowsFeature -name Web-Server -IncludeManagementTools
+
+$binding = "sharonde.xyz"
+
+$cert = New-SelfSignedCertificate -DnsName "$binding" -CertStoreLocation "cert:\LocalMachine\My"
+
+$DestStore = new-object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root,"localmachine")
+$DestStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+$DestStore.Add($cert)
+$DestStore.Close()
+
+$appPoolName = "sharonde-pool"
+$runtimeVersion = "v4.0"
+$appPool = New-WebAppPool $appPoolName
+$appPool | Set-ItemProperty -Name "managedRuntimeVersion" -Value $runtimeVersion
+
+$webRootPath="C:\MyWebsite\"
+New-Item -ItemType Directory -Name 'MyWebsite' -Path 'C:\'
+New-Item -ItemType File -Name 'index.html' -Path $webRootPath
+
+$siteName="sharonde.xyz-web"
+$webRootPath="C:\MyWebsite\"
+New-Website -Name $siteName -PhysicalPath $webRootPath -ApplicationPool $appPoolName -HostHeader $binding
+
+New-WebBinding -Name $siteName -Protocol "https" -Port 443 -IPAddress * -HostHeader $binding -SslFlags 1
+(Get-WebBinding -Name $siteName -Port 443 -Protocol "https" -HostHeader $binding).AddSslCertificate($cert[0].Thumbprint, "my")
+
+
+</powershell>
+
+#create our self-signed certificat
+#$binding = "$(hostname).localtest.me"
+
+#Add cert to Trusted Root Certificate store..
+
+#Create App Pool
+
+# #create new folder
+
+#Assigning HTTPS bindings to the 
+#search the cert..
+# $binding = "sharonde.xyz"
+# $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object {$_.Subject -eq "CN=$binding"}
+
+
+#Install DNS server
+# Install-WindowsFeature -Name DNS -IncludeManagementTools
+#Add primary Zone
+#Add-DnsServerPrimaryZone -Name "dev.sharonde.xyz" -ReplicationScope "Forest" -PassThru -DynamicUpdate NonsecureAndSecure
+
+#Add-DnsServerPrimaryZone -Name "dev.sharonde.xyz" -ZoneFile "dev.sharonde.xyz.dns" -PassThru -DynamicUpdate NonsecureAndSecure
+# Add-DnsServerPrimaryZone -Name "sharonde.xyz" -ZoneFile "sharonde.xyz.dns" -PassThru -DynamicUpdate NonsecureAndSecure
+#Add-DnsServerPrimaryZone -Name "localtest.me" -ZoneFile "localtest.me.dns" -PassThru -DynamicUpdate NonsecureAndSecure
+
+# Add-DnsServerResourceRecordA -Name hostname -ZoneName "sharonde.xyz" -AllowUpdateAny -IPv4Address 10.0.2.15
+
+#reverse lookup zone:
+# Add-DnsServerPrimaryZone -NetworkID “10.0.2/24” -ReplicationScope “Forest”
+
+
+#Get-DnsServerZone
+
+#Change Replication scope example..
+#Set-DnsServerPrimaryZone -Name "western.contoso.com" -ReplicationScope "Forest" -PassThru
