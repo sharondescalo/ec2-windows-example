@@ -1,3 +1,4 @@
+#Use:  ConvertIISLogFrom-CSV filename.log  | Export-Csv -Path log.csv
 function ConvertIISLogFrom-CSV{
 
     [cmdletbinding()]
@@ -18,3 +19,4 @@ Get-ChildItem $path -Filter "ex*" |
     Where-Object {$_."cs-username" -eq "username" -and $_."x-fullpath" -like "*error*"} |
     Select-Object date,time,"c-ip"," cs-uri-query","x-session","sc-status" |
     Format-Table -AutoSize
+    
